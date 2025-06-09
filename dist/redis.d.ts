@@ -2,18 +2,18 @@ import { createClient, RedisClientOptions } from './redis';
 export type OwnRedisClientType = ReturnType<typeof createClient>;
 export declare class RedisCommon {
     private config;
-    private category;
+    private clusterId;
     private createPromise;
-    constructor(config: RedisClientOptions, category: string);
+    constructor(config: RedisClientOptions, clusterId: string);
     private getClient;
-    set<T>(key: string, value: T, durationInSeconds?: number): Promise<void>;
+    set<T>(key: string, value: T, subKey?: string, durationInSeconds?: number): Promise<void>;
     private parseReply;
-    get<T>(key: string): Promise<T | null | undefined>;
-    del(key: string): Promise<boolean>;
+    get<T>(key: string, subKey?: string): Promise<T | null | undefined>;
+    del(key: string, subKey?: string): Promise<boolean>;
     private getRedisKey;
-    hget<T>(key: string, field: string): Promise<T | null | undefined>;
-    hdel(key: string, field: string): Promise<boolean>;
+    hget<T>(key: string, hKey: string, subKey?: string): Promise<T | null | undefined>;
+    hdel(key: string, hKey: string, subKey?: string): Promise<boolean>;
     private serializeValue;
-    exists(key: string): Promise<boolean>;
-    hset<T>(key: string, field: string, value: T): Promise<void>;
+    exists(key: string, subKey?: string): Promise<boolean>;
+    hset<T>(key: string, hKey: string, value: T, subKey?: string): Promise<void>;
 }

@@ -13,9 +13,9 @@ const DataType = {
     OBJECT: '4',
 };
 class RedisCommon {
-    constructor(config, category) {
+    constructor(config, clusterId) {
         this.config = config;
-        this.category = category;
+        this.clusterId = clusterId;
     }
     getClient() {
         if (this.createPromise == null) {
@@ -51,31 +51,10 @@ class RedisCommon {
         }
         return this.createPromise;
     }
-    async set(key, value, durationInSeconds) {
+    async set(key, value, subKey, durationInSeconds) {
         const client = await this.getClient();
-        let valueAsString = null;
-        if (value === null) {
-            valueAsString = `${DataType.NULL}${value}`;
-        }
-        else if (value === undefined) {
-            valueAsString = `${DataType.UNDEFINED}${value}`;
-        }
-        else if (typeof value === 'boolean') {
-            valueAsString = `${DataType.BOOLEAN}${value ? '1' : '0'}`;
-        }
-        else if (typeof value === 'string') {
-            valueAsString = `${DataType.STRING}${value}`;
-        }
-        else if (typeof value === 'number') {
-            valueAsString = `${DataType.NUMBER}${value}`;
-        }
-        else if (value instanceof Date) {
-            valueAsString = `${DataType.DATE}${value.getTime()}`;
-        }
-        else {
-            valueAsString = `${DataType.OBJECT}${JSON.stringify(value)}`;
-        }
-        await client.set(this.getRedisKey(key), valueAsString, durationInSeconds != null ? {
+        let valueAsString = this.serializeValue(value);
+        await client.set(this.getRedisKey(key, subKey), valueAsString, durationInSeconds != null ? {
             EX: durationInSeconds,
         } : undefined);
         return;
@@ -109,32 +88,32 @@ class RedisCommon {
             return JSON.parse(content);
         }
     }
-    async get(key) {
+    async get(key, subKey) {
         const client = await this.getClient();
-        const reply = await client.get(this.getRedisKey(key));
+        const reply = await client.get(this.getRedisKey(key, subKey));
         if (reply == null) {
-            throw new KeyNotExistError_1.KeyNotExistError(this.getRedisKey(key));
+            throw new KeyNotExistError_1.KeyNotExistError(this.getRedisKey(key, subKey));
         }
         return this.parseReply(reply);
     }
-    async del(key) {
+    async del(key, subKey) {
         const client = await this.getClient();
-        return (await client.del(this.getRedisKey(key))) > 0;
+        return (await client.del(this.getRedisKey(key, subKey))) > 0;
     }
-    getRedisKey(key) {
-        return `${this.category}_${key}`;
+    getRedisKey(key, subKey) {
+        return subKey ? `${this.clusterId}_${key}_${subKey}` : `${this.clusterId}_${key}`;
     }
-    async hget(key, field) {
+    async hget(key, hKey, subKey) {
         const client = await this.getClient();
-        const reply = await client.hget(this.getRedisKey(key), field);
+        const reply = await client.hget(this.getRedisKey(key, subKey), hKey);
         if (reply == null) {
-            throw new KeyNotExistError_1.KeyNotExistError(this.getRedisKey(key));
+            throw new KeyNotExistError_1.KeyNotExistError(this.getRedisKey(key, subKey));
         }
         return this.parseReply(reply);
     }
-    async hdel(key, field) {
+    async hdel(key, hKey, subKey) {
         const client = await this.getClient();
-        const reply = await client.hdel(this.getRedisKey(key), field);
+        const reply = await client.hdel(this.getRedisKey(key, subKey), hKey);
         return reply != null;
     }
     serializeValue(value) {
@@ -162,14 +141,14 @@ class RedisCommon {
         }
         return valueAsString;
     }
-    async exists(key) {
+    async exists(key, subKey) {
         const client = await this.getClient();
-        return (await client.exists(this.getRedisKey(key))) > 0;
+        return (await client.exists(this.getRedisKey(key, subKey))) > 0;
     }
-    async hset(key, field, value) {
+    async hset(key, hKey, value, subKey) {
         const client = await this.getClient();
         const valueAsString = this.serializeValue(value);
-        await client.hset(this.getRedisKey(key), field, valueAsString);
+        await client.hset(this.getRedisKey(key, subKey), hKey, valueAsString);
         return;
     }
 }
