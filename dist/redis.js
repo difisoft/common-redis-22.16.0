@@ -17,14 +17,14 @@ class RedisCommon {
         this.config = config;
         this.clusterId = clusterId;
     }
-    getClient() {
+    async getClient() {
         if (this.createPromise == null) {
             this.createPromise = new Promise((resolve, reject) => {
                 let isFinished = false;
                 const client = (0, redis_1.createClient)(this.config);
                 client.on('error', (err) => {
                     try {
-                        client.close();
+                        client.quit();
                     }
                     catch (err) {
                         console.error(err);
@@ -44,10 +44,14 @@ class RedisCommon {
                     isFinished = true;
                     resolve(client);
                 });
+                client.connect().catch((err) => {
+                    if (isFinished) {
+                        return;
+                    }
+                    isFinished = true;
+                    reject(err);
+                });
             });
-        }
-        else {
-            return this.createPromise;
         }
         return this.createPromise;
     }

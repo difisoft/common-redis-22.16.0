@@ -20,14 +20,15 @@ export class RedisCommon {
 
   }
 
-  private getClient(): Promise<OwnRedisClientType> {
+  private async getClient(): Promise<OwnRedisClientType> {
     if (this.createPromise == null) {
       this.createPromise = new Promise<OwnRedisClientType>((resolve, reject) => {
         let isFinished = false;
         const client = createClient(this.config);
+        
         client.on('error', (err) => {
           try {
-            client.close();
+            client.quit();
           } catch (err) {
             console.error(err);
           }
@@ -39,6 +40,7 @@ export class RedisCommon {
           isFinished = true;
           reject(err);
         });
+
         client.on('ready', () => {
           if (isFinished) {
             return;
@@ -46,9 +48,15 @@ export class RedisCommon {
           isFinished = true;
           resolve(client);
         });
+
+        client.connect().catch((err) => {
+          if (isFinished) {
+            return;
+          }
+          isFinished = true;
+          reject(err);
+        });
       });
-    } else {
-      return this.createPromise;
     }
     return this.createPromise;
   }
