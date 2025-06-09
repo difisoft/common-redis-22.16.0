@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RedisCommon = void 0;
-const redis_1 = require("./redis");
+const redis_1 = require("redis");
 const KeyNotExistError_1 = require("./KeyNotExistError");
 const DataType = {
     UNDEFINED: 'a',
