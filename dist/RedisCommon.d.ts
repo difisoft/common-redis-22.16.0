@@ -16,4 +16,14 @@ export declare class RedisCommon {
     private serializeValue;
     exists(key: string, subKey?: string): Promise<boolean>;
     hset<T>(key: string, hKey: string, value: T, subKey?: string): Promise<void>;
+    lpush<T>(key: string, ...values: T[]): Promise<number>;
+    rpush<T>(key: string, ...values: T[]): Promise<number>;
+    lpop<T>(key: string): Promise<T | null | undefined>;
+    rpop<T>(key: string): Promise<T | null | undefined>;
+    llen(key: string): Promise<number>;
+    lrange<T>(key: string, start: number, stop: number): Promise<T[]>;
+    lindex<T>(key: string, index: number): Promise<T | null | undefined>;
+    lset<T>(key: string, index: number, value: T): Promise<void>;
+    lrem<T>(key: string, count: number, value: T): Promise<number>;
+    ltrim(key: string, start: number, stop: number): Promise<void>;
 }

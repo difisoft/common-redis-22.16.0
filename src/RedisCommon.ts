@@ -163,4 +163,86 @@ export class RedisCommon {
     await client.hset(this.getRedisKey(key, subKey), hKey, valueAsString);
     return;
   }
+
+  // List operations
+  async lpush<T>(key: string, ...values: T[]): Promise<number> {
+    const client = await this.getClient();
+    const serializedValues = values.map(value => this.serializeValue(value));
+    return await client.lPush(this.getRedisKey(key), serializedValues);
+  }
+
+  async rpush<T>(key: string, ...values: T[]): Promise<number> {
+    const client = await this.getClient();
+    const serializedValues = values.map(value => this.serializeValue(value));
+    return await client.rPush(this.getRedisKey(key), serializedValues);
+  }
+
+  async lpop<T>(key: string): Promise<T | null | undefined> {
+    const client = await this.getClient();
+    const reply = await client.lPop(this.getRedisKey(key));
+    if (reply == null) {
+      return null;
+    }
+    return this.parseReply<T>(reply);
+  }
+
+  async rpop<T>(key: string): Promise<T | null | undefined> {
+    const client = await this.getClient();
+    const reply = await client.rPop(this.getRedisKey(key));
+    if (reply == null) {
+      return null;
+    }
+    return this.parseReply<T>(reply);
+  }
+
+  async llen(key: string): Promise<number> {
+    const client = await this.getClient();
+    return await client.lLen(this.getRedisKey(key));
+  }
+
+  async lrange<T>(key: string, start: number, stop: number): Promise<T[]> {
+    const client = await this.getClient();
+    const replies = await client.lRange(this.getRedisKey(key), start, stop);
+    if (replies == null) {
+      return [];
+    }
+    const results: T[] = [];
+    for (const reply of replies) {
+      const result = this.parseReply<T>(reply);
+      if (result != null) {
+        results.push(result);
+      }
+    }
+    return results;
+  }
+
+  async lindex<T>(key: string, index: number): Promise<T | null | undefined> {
+    const client = await this.getClient();
+    const reply = await client.lIndex(this.getRedisKey(key), index);
+    if (reply == null) {
+      return null;
+    }
+    return this.parseReply<T>(reply);
+  }
+
+  async lset<T>(key: string, index: number, value: T): Promise<void> {
+    const client = await this.getClient();
+    const valueAsString = this.serializeValue(value);
+    await client.lSet(this.getRedisKey(key), index, valueAsString);
+    return;
+  }
+
+  async lrem<T>(key: string, count: number, value: T): Promise<number> {
+    const client = await this.getClient();
+    const valueAsString = this.serializeValue(value);
+    return await client.lRem(this.getRedisKey(key), count, valueAsString);
+  }
+
+  async ltrim(key: string, start: number, stop: number): Promise<void> {
+    const client = await this.getClient();
+    await client.lTrim(this.getRedisKey(key), start, stop);
+    return;
+  }
+
+  
 } 

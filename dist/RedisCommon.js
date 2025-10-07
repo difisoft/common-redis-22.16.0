@@ -155,5 +155,75 @@ class RedisCommon {
         await client.hset(this.getRedisKey(key, subKey), hKey, valueAsString);
         return;
     }
+    // List operations
+    async lpush(key, ...values) {
+        const client = await this.getClient();
+        const serializedValues = values.map(value => this.serializeValue(value));
+        return await client.lPush(this.getRedisKey(key), serializedValues);
+    }
+    async rpush(key, ...values) {
+        const client = await this.getClient();
+        const serializedValues = values.map(value => this.serializeValue(value));
+        return await client.rPush(this.getRedisKey(key), serializedValues);
+    }
+    async lpop(key) {
+        const client = await this.getClient();
+        const reply = await client.lPop(this.getRedisKey(key));
+        if (reply == null) {
+            return null;
+        }
+        return this.parseReply(reply);
+    }
+    async rpop(key) {
+        const client = await this.getClient();
+        const reply = await client.rPop(this.getRedisKey(key));
+        if (reply == null) {
+            return null;
+        }
+        return this.parseReply(reply);
+    }
+    async llen(key) {
+        const client = await this.getClient();
+        return await client.lLen(this.getRedisKey(key));
+    }
+    async lrange(key, start, stop) {
+        const client = await this.getClient();
+        const replies = await client.lRange(this.getRedisKey(key), start, stop);
+        if (replies == null) {
+            return [];
+        }
+        const results = [];
+        for (const reply of replies) {
+            const result = this.parseReply(reply);
+            if (result != null) {
+                results.push(result);
+            }
+        }
+        return results;
+    }
+    async lindex(key, index) {
+        const client = await this.getClient();
+        const reply = await client.lIndex(this.getRedisKey(key), index);
+        if (reply == null) {
+            return null;
+        }
+        return this.parseReply(reply);
+    }
+    async lset(key, index, value) {
+        const client = await this.getClient();
+        const valueAsString = this.serializeValue(value);
+        await client.lSet(this.getRedisKey(key), index, valueAsString);
+        return;
+    }
+    async lrem(key, count, value) {
+        const client = await this.getClient();
+        const valueAsString = this.serializeValue(value);
+        return await client.lRem(this.getRedisKey(key), count, valueAsString);
+    }
+    async ltrim(key, start, stop) {
+        const client = await this.getClient();
+        await client.lTrim(this.getRedisKey(key), start, stop);
+        return;
+    }
 }
 exports.RedisCommon = RedisCommon;
