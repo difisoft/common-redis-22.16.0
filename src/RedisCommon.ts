@@ -20,7 +20,7 @@ export class RedisCommon {
 
   }
 
-  private async getClient(): Promise<OwnRedisClientType> {
+  protected async getClient(): Promise<OwnRedisClientType> {
     if (this.createPromise == null) {
       this.createPromise = new Promise<OwnRedisClientType>((resolve, reject) => {
         let isFinished = false;
@@ -108,6 +108,15 @@ export class RedisCommon {
     return this.parseReply<T>(reply);
   }
 
+  async getOrNull<T>(key: string, subKey?: string): Promise<T | null | undefined> {
+    const client = await this.getClient();
+    const reply = await client.get(this.getRedisKey(key, subKey));
+    if (reply == null) {
+      return null;
+    }
+    return this.parseReply<T>(reply);
+  }
+
   async del(key: string, subKey?: string): Promise<boolean> {
     const client = await this.getClient();
     return (await client.del(this.getRedisKey(key, subKey))) > 0;
@@ -122,6 +131,15 @@ export class RedisCommon {
     const reply = await client.hget(this.getRedisKey(key, subKey), hKey);
     if (reply == null) {
       throw new KeyNotExistError(this.getRedisKey(key, subKey));
+    }
+    return this.parseReply<T>(reply as string);
+  }
+
+  async hgetOrNull<T>(key: string, hKey: string, subKey?: string): Promise<T | null | undefined> {
+    const client = await this.getClient();
+    const reply = await client.hget(this.getRedisKey(key, subKey), hKey);
+    if (reply == null) {
+      return null;
     }
     return this.parseReply<T>(reply as string);
   }

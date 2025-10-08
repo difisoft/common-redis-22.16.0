@@ -100,6 +100,14 @@ class RedisCommon {
         }
         return this.parseReply(reply);
     }
+    async getOrNull(key, subKey) {
+        const client = await this.getClient();
+        const reply = await client.get(this.getRedisKey(key, subKey));
+        if (reply == null) {
+            return null;
+        }
+        return this.parseReply(reply);
+    }
     async del(key, subKey) {
         const client = await this.getClient();
         return (await client.del(this.getRedisKey(key, subKey))) > 0;
@@ -112,6 +120,14 @@ class RedisCommon {
         const reply = await client.hget(this.getRedisKey(key, subKey), hKey);
         if (reply == null) {
             throw new KeyNotExistError_1.KeyNotExistError(this.getRedisKey(key, subKey));
+        }
+        return this.parseReply(reply);
+    }
+    async hgetOrNull(key, hKey, subKey) {
+        const client = await this.getClient();
+        const reply = await client.hget(this.getRedisKey(key, subKey), hKey);
+        if (reply == null) {
+            return null;
         }
         return this.parseReply(reply);
     }
