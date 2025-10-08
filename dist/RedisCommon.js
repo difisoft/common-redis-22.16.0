@@ -241,5 +241,57 @@ class RedisCommon {
         await client.lTrim(this.getRedisKey(key), start, stop);
         return;
     }
+    // Lock operations
+    async acquireLock(lockKey, nodeId, ttlSeconds) {
+        const client = await this.getClient();
+        const key = this.getRedisKey(lockKey);
+        // Add this node to the waiting list
+        await client.lPush(key, nodeId);
+        // Set TTL for the entire lock
+        await client.expire(key, ttlSeconds);
+        // Check if this node is first in line
+        const firstNode = await client.lIndex(key, -1); // Get the last element (first in queue)
+        return firstNode === nodeId;
+    }
+    async extendLock(lockKey, ttlSeconds) {
+        const client = await this.getClient();
+        const key = this.getRedisKey(lockKey);
+        // Extend TTL if the key exists
+        const exists = await client.exists(key);
+        if (exists) {
+            await client.expire(key, ttlSeconds);
+            return true;
+        }
+        return false;
+    }
+    async releaseLock(lockKey, nodeId) {
+        const client = await this.getClient();
+        const key = this.getRedisKey(lockKey);
+        // Check if this node is still first in line
+        const firstNode = await client.lIndex(key, -1);
+        if (firstNode !== nodeId) {
+            return false; // This node is not the current holder
+        }
+        // Remove this node from the queue
+        await client.lPop(key);
+        // If queue is empty, delete the key
+        const length = await client.lLen(key);
+        if (length === 0) {
+            await client.del(key);
+        }
+        return true;
+    }
+    async getLockStatus(lockKey) {
+        const client = await this.getClient();
+        const key = this.getRedisKey(lockKey);
+        const currentHolder = await client.lIndex(key, -1);
+        const queueLength = await client.lLen(key);
+        const ttl = await client.ttl(key);
+        return {
+            currentHolder: currentHolder,
+            queueLength,
+            ttl
+        };
+    }
 }
 exports.RedisCommon = RedisCommon;

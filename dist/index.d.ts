@@ -1,3 +1,4 @@
 import { RedisCommon } from './RedisCommon';
 import { KeyNotExistError } from './KeyNotExistError';
-export { RedisCommon, KeyNotExistError };
+import { FirstAccessLock } from './FirstAccessLock';
+export { RedisCommon, KeyNotExistError, FirstAccessLock };

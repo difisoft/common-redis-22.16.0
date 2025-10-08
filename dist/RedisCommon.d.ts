@@ -28,4 +28,12 @@ export declare class RedisCommon {
     lset<T>(key: string, index: number, value: T): Promise<void>;
     lrem<T>(key: string, count: number, value: T): Promise<number>;
     ltrim(key: string, start: number, stop: number): Promise<void>;
+    acquireLock(lockKey: string, nodeId: string, ttlSeconds: number): Promise<boolean>;
+    extendLock(lockKey: string, ttlSeconds: number): Promise<boolean>;
+    releaseLock(lockKey: string, nodeId: string): Promise<boolean>;
+    getLockStatus(lockKey: string): Promise<{
+        currentHolder: string | null;
+        queueLength: number;
+        ttl: number;
+    }>;
 }
